@@ -77,6 +77,7 @@ public class AppInfosPlugin extends CobaltAbstractPlugin {
     public void onMessage(CobaltPluginWebContainer webContainer, JSONObject message) {
         try {
             String action = message.getString(Cobalt.kJSAction);
+            String name = message.getString(Cobalt.kJSPluginName);
 
             if (action.equals(GET_APP_INFOS)){
                 CobaltFragment fragment = webContainer.getFragment();
@@ -89,7 +90,7 @@ public class AppInfosPlugin extends CobaltAbstractPlugin {
                     data.put(LANG, Locale.getDefault().getLanguage());
                     data.put(PLATFORM, ANDROID);
                     data.put(DEVICE_ID, getUniqueId(ctx));
-                    fragment.sendCallback(message.getString(Cobalt.kJSCallback),data);
+                    fragment.sendPlugin(name, data, null);
                 }
                 catch (PackageManager.NameNotFoundException e) {
                     if (Cobalt.DEBUG) {
