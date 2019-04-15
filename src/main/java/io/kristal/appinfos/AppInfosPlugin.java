@@ -90,7 +90,7 @@ public class AppInfosPlugin extends CobaltAbstractPlugin {
                     data.put(LANG, Locale.getDefault().getLanguage());
                     data.put(PLATFORM, ANDROID);
                     data.put(DEVICE_ID, getUniqueId(ctx));
-                    fragment.sendPlugin(name, data, null);
+                    fragment.sendPlugin(name, data);
                 }
                 catch (PackageManager.NameNotFoundException e) {
                     if (Cobalt.DEBUG) {
