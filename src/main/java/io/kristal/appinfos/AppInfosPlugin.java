@@ -35,6 +35,8 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.provider.Settings;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import java.util.Locale;
 import org.cobaltians.cobalt.Cobalt;
@@ -68,43 +70,61 @@ public class AppInfosPlugin extends CobaltAbstractPlugin {
      * CONSTRUCTORS
      **************************************************************************************/
 
-    public static CobaltAbstractPlugin getInstance(CobaltPluginWebContainer webContainer) {
-        if (sInstance == null) sInstance = new AppInfosPlugin();
+    public static CobaltAbstractPlugin getInstance()
+    {
+        if (sInstance == null)
+        {
+            sInstance = new AppInfosPlugin();
+        }
         return sInstance;
     }
-
+    
     @Override
-    public void onMessage(CobaltPluginWebContainer webContainer, JSONObject message) {
-        try {
-            String action = message.getString(Cobalt.kJSAction);
-
-            if (action.equals(GET_APP_INFOS)){
-                CobaltFragment fragment = webContainer.getFragment();
-                Context ctx = webContainer.getActivity();
-                try {
-                    PackageInfo packageInfo = ctx.getPackageManager().getPackageInfo(ctx.getPackageName(), 0);
-                    JSONObject data = new JSONObject();
-                    data.put(VERSION_NAME, packageInfo.versionName);
-                    data.put(VERSION_CODE, packageInfo.versionCode);
-                    data.put(LANG, Locale.getDefault().getLanguage());
-                    data.put(PLATFORM, ANDROID);
-                    data.put(DEVICE_ID, getUniqueId(ctx));
-                    fragment.sendCallback(message.getString(Cobalt.kJSCallback),data);
+    public void onMessage(@NonNull CobaltPluginWebContainer webContainer, @NonNull String action,
+            @Nullable JSONObject data, @Nullable String callbackChannel)
+    {
+        if (action.equals(GET_APP_INFOS)
+            && callbackChannel != null)
+        {
+            Context ctx = webContainer.getActivity();
+            if (ctx != null)
+            {
+                try
+                {
+                    PackageInfo packageInfo = ctx.getPackageManager()
+                                                 .getPackageInfo(ctx.getPackageName(), 0);
+                    try
+                    {
+                        JSONObject message = new JSONObject();
+                        message.put(VERSION_NAME, packageInfo.versionName);
+                        message.put(VERSION_CODE, packageInfo.versionCode);
+                        message.put(LANG, Locale.getDefault().getLanguage());
+                        message.put(PLATFORM, ANDROID);
+                        message.put(DEVICE_ID, getUniqueId(ctx));
+                        Cobalt.publishMessage(message, callbackChannel);
+                    }
+                    catch(JSONException e)
+                    {
+                        e.printStackTrace();
+                    }
                 }
-                catch (PackageManager.NameNotFoundException e) {
-                    if (Cobalt.DEBUG) {
-                        Log.e(TAG, "onMessage: Package Name not found " + message.toString() + ".");
+                catch (PackageManager.NameNotFoundException e)
+                {
+                    if (Cobalt.DEBUG)
+                    {
+                        Log.e(TAG, "onMessage: package name not found");
                         e.printStackTrace();
                     }
                 }
             }
-            else if (Cobalt.DEBUG) Log.e(TAG, "onMessage: invalid action " + action + "in message " + message.toString() + ".");
-        }
-        catch (JSONException exception) {
-            if (Cobalt.DEBUG) {
-                Log.e(TAG, "onMessage: missing action key in message " + message.toString() + ".");
-                exception.printStackTrace();
+            else
+            {
+                Log.e(TAG, "onMessage: null context");
             }
+        }
+        else if (Cobalt.DEBUG)
+        {
+            Log.e(TAG, "onMessage: invalid action " + action + " or no callbackChannel found");
         }
     }
 
